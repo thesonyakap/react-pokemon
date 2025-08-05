@@ -1,43 +1,39 @@
-import {Outlet, Link, NavLink, useLoaderData, useNavigation, Form, useSubmit} from "react-router-dom";
-import {useEffect, useState} from "react";
-import axios from "axios";
-import {getPokemons} from "./Contacts.jsx";
+import {Outlet, Link, NavLink, useLoaderData, useNavigation, Form} from "react-router-dom";
+import {useState} from "react";
+import {getPokemons, createPokemons} from "./Contacts.jsx";
+
+export async function action() {
+    const pekemon= await createPokemons();
+    return pekemon;
+}
 
 export async function loader({request}) {
     const url = new URL(request.url);
     const q = url.searchParams.get("q");
     const pokemons = await getPokemons(q)
-    // console.log({pokemons})
     return pokemons
 }
 
 export default function Root() {
     const [data, setData] = useState("");
+    const [pok, setPok] = useState(null);
+
+    const trans = data.toLowerCase()
 
     const pokemons= useLoaderData()
     const navigation = useNavigation()
-    const submit = useSubmit()
 
-    console.log(data)
+
+    console.log(pok)
 
     const searching =
         navigation.location &&
         new URLSearchParams(navigation.location.search).has("q")
 
-    // useEffect(() => {
-    //     document.getElementById("q").value=q
-    // }, [q]);
-
-    // console.log(pokemons)
-    // useEffect(() => {
-    //     axios.get("https://6828a9996075e87073a48b20.mockapi.io/Tasks")
-    //         .then((response) => setData(response.data))
-    //         .catch((error) => console.log(error))
-    // }, [])
     return (
         <>
             <div id="sidebar">
-                <h1>React Router Contacts</h1>
+                <h1>Pokemons</h1>
                 <div>
                     <Form id="search-form" role="search">
                         <input
@@ -48,10 +44,6 @@ export default function Root() {
                             type="search"
                             name="q"
                             onChange={(event) => {
-                                const isFirstSearch = q == null;
-                                submit(event.currentTarget.form, {
-                                    replace: !isFirstSearch,
-                                })
                                 setData(event.target.value)
                             }}
                         />
@@ -65,9 +57,17 @@ export default function Root() {
                             aria-live="polite"
                         ></div>
                     </Form>
-                    <form method="post">
-                        <button type="submit">New</button>
-                    </form>
+                    <Form method="post">
+                        <NavLink to={"pokemon/edit"}><button type="submit">New</button></NavLink>
+                    </Form>
+                </div>
+                <div id="ownpok">
+                    <NavLink to={`pokemon/my`} className={({isActive, isPending}) =>
+                        isActive
+                            ? "active"
+                            : isPending
+                                ? "pending"
+                                : ""}><span>My pokemons</span></NavLink>
                 </div>
                 <nav>
                     <ul>
@@ -85,7 +85,7 @@ export default function Root() {
                                         {item.name.english}</NavLink>
                                 </li>
                             }
-                            else if (item.name.english.includes(data)) {
+                            else if (item.name.english.includes(data) || item.name.english.includes(data[0].toUpperCase())) {
                                     return <li key={item.id}>
                                         <NavLink to={`pokemon/${item.id}`}
                                                  className={({isActive, isPending}) =>
@@ -105,6 +105,7 @@ export default function Root() {
                             }
 
                         })}
+
                     </ul>
                 </nav>
             </div>
